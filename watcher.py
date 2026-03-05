@@ -58,30 +58,22 @@ log = logging.getLogger("rag-watch")
 # ---------------------------------------------------------------------------
 
 def create_collection(name: str, vector_size: int = 2560) -> bool:
-    """Create a Qdrant collection via the RAG API's Qdrant proxy, or directly."""
-    # We talk to Qdrant directly here since the RAG API doesn't expose collection creation
-    from config import RAG_API_URL, QDRANT_URL
-    import httpx
-    qdrant_url = QDRANT_URL
+    """Register a new collection via the RAG API (creates in Qdrant + adds to allowlist)."""
     try:
-        # Check if already exists
-        r = httpx.get(f"{qdrant_url}/collections/{name}", timeout=5)
-        if r.status_code == 200:
-            log.info("Collection '%s' already exists", name)
-            return True
-        # Create it
-        r = httpx.put(
-            f"{qdrant_url}/collections/{name}",
-            json={"vectors": {"size": vector_size, "distance": "Cosine"}},
+        r = requests.post(
+            f"{RAG_API_URL}/admin/collections/register",
+            json={"name": name, "vector_size": vector_size},
+            headers={"X-API-Key": RAG_API_KEY},
             timeout=10,
         )
-        if r.status_code in (200, 201):
-            log.info("Created Qdrant collection '%s'", name)
+        if r.status_code == 200:
+            status = r.json().get("status")
+            log.info("Collection '%s' registered: %s", name, status)
             return True
-        log.error("Failed to create collection '%s': %s", name, r.text)
+        log.error("Failed to register collection '%s': %s", name, r.text)
         return False
     except Exception as e:
-        log.error("Error creating collection '%s': %s", name, e)
+        log.error("Error registering collection '%s': %s", name, e)
         return False
 
 
