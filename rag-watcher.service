@@ -1,0 +1,17 @@
+[Unit]
+Description=RAG Watch — document ingestion pipeline
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/rag-watch
+ExecStart=%h/rag-watch/venv/bin/python watcher.py
+Restart=on-failure
+RestartSec=10
+Environment=RAG_API_URL=http://localhost:8000
+Environment=RAG_API_KEY=REPLACE_WITH_YOUR_KEY
+Environment=RAG_WATCH_DIR=%h/rag-watch
+Environment=CLAMAV_ENABLED=true
+
+[Install]
+WantedBy=default.target
