@@ -130,7 +130,10 @@ def process_file(file_path: Path) -> None:
     ingested = ingest_chunks(collection, chunks, source=file_path.name)
     log.info("Ingested %d/%d chunks from '%s'", ingested, len(chunks), file_path.name)
 
-    # 4. Move to processed
+    # 4. Only move to processed if ingestion succeeded
+    if ingested == 0:
+        log.error("Ingestion failed for '%s' — leaving in inbox for retry", file_path.name)
+        return
     _move_to(file_path, PROCESSED_DIR / collection)
 
 
